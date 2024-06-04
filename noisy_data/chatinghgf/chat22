@@ -1,0 +1,136 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+class Chat extends StatefulWidget {
+  const Chat({Key? key}) : super(key: key);
+
+  @override
+  _ChatState createState() => _ChatState();
+}
+
+class Message {
+  final String body;
+  final String creationDate;
+
+  Message(this.body, this.creationDate);
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(json['body'], json['creationDate']);
+  }
+}
+
+class _ChatState extends State<Chat> {
+  final TextEditingController _messageController = TextEditingController();
+  List<Message> _messages = [];
+
+  Future<void> send_message(String message) async {
+    const String apiUrl = 'http://62.72.13.94:9081/api/ramchtmsg/send/message';
+
+    Map<String, dynamic> chattingData = {
+      "conversation": {"id": 77},
+      "senderId": 5,
+      "creationDate": "2024-05-01T08:00:00Z",
+      "body": message,
+      "read": false
+    };
+
+    String jsonBody = jsonEncode(chattingData);
+    print(jsonBody);
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonBody,
+    );
+
+    if (response.statusCode == 200) {
+      // Message sent successfully (you can handle this as needed)
+      print('Message sent!');
+    } else {
+      // Handle error (e.g., display an error message to the user)
+      print('Error sending message: ${response.statusCode}');
+    }
+  }
+
+  Future<void> get_messages() async {
+    final String apiUrl = 'http://localhost:9081/api/ramchtmsg/get/message/83';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final List<dynamic> messagesJson = jsonDecode(response.body);
+        _messages =
+            messagesJson.map((message) => Message.fromJson(message)).toList();
+        setState(() {}); // Update UI to reflect new messages
+      } else {
+        print('Error getting messages: ${response.statusCode}');
+        // Handle specific errors based on response body (if applicable)
+      }
+    } catch (error) {
+      print('Error fetching messages: $error');
+      // Display an error message to the user
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Chatting with Your Registered Business'),
+      ),
+      body: Column(
+        children: [
+          // Chat messages list (replace with your actual implementation)
+          Expanded(
+            child: _messages.isEmpty
+                ? const Center(child: Text('No messages yet'))
+                : ListView.builder(
+                    itemCount: _messages.length, // Use _messages.length
+                    itemBuilder: (context, index) {
+                      final message =
+                          _messages[index]; // Access message from list
+                      return ListTile(
+                        title: Text(message.body),
+                        subtitle: Text(message.creationDate),
+                      );
+                    },
+                  ),
+          ),
+
+          // Input field and send button
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: InputDecoration(
+                      hintText: 'Type your message here...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                FloatingActionButton(
+                  onPressed: () async {
+                    String message = _messageController.text;
+                    _messageController.clear();
+                    await send_message(message);
+                    await get_messages();
+                  },
+                  child: const Icon(Icons.send),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
