@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ram/pages/task_update_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TaskFormPage extends StatefulWidget {
@@ -11,11 +13,13 @@ class TaskFormPage extends StatefulWidget {
 
 class _TaskFormPageState extends State<TaskFormPage> {
   final TextEditingController _taskNameController = TextEditingController();
-  final TextEditingController _taskDescriptionController = TextEditingController();
+  final TextEditingController _taskDescriptionController =
+      TextEditingController();
   final TextEditingController _reminderController = TextEditingController();
   final TextEditingController _dueDateController = TextEditingController();
   final TextEditingController _runningTaskController = TextEditingController();
-  final TextEditingController _completedTaskController = TextEditingController();
+  final TextEditingController _completedTaskController =
+      TextEditingController();
   final TextEditingController _statusController = TextEditingController();
   String _priority = 'Low';
 
@@ -30,7 +34,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             tabs: [
               Tab(text: 'Scheduled'),
               Tab(text: 'Running'),
-              Tab(text: 'Completed'),
+              Tab(text: 'All Task'),
             ],
           ),
         ),
@@ -38,12 +42,48 @@ class _TaskFormPageState extends State<TaskFormPage> {
           children: [
             _buildScheduledTasksTab(),
             _buildRunningTasksTab(),
-            _buildCompletedTasksTab(),
+            _ATasksTab(),
           ],
         ),
       ),
     );
   }
+
+  Future<List<dynamic>> _fetchRunningTasks() async {
+    int? userId;
+    final String apiUrl =
+        'http://62.72.13.94:9081/api/ramtsksched/get/taskby/3';
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+      userId = prefs.getInt('user_id');
+
+      if (token == null) {
+        print('JWT token not found. User may not be logged in.');
+        return [];
+      }
+
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Authorization': token},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        return data;
+      } else {
+        print(
+            'Failed to load running tasks. Error ${response.statusCode}: ${response.reasonPhrase}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching running tasks: $e');
+      return [];
+    }
+  }
+
+   
 
   Future<void> _AddTask() async {
     int? userId;
@@ -58,15 +98,19 @@ class _TaskFormPageState extends State<TaskFormPage> {
         print('JWT token not found. User may not be logged in.');
         return;
       }
-      
+     String formattedReminderDate = _formatDateTime(_reminderController.text);
+    String formattedDueDate = _formatDateTime(_dueDateController.text);
       Map<String, dynamic> taskData = {
         "userId": userId,
         "taskName": _taskNameController.text,
         "taskDescription": _taskDescriptionController.text,
-        "reminderDate":  "2024-05-22T18:30:00.000Z",
-        "status": "open",
-        "dueDate": "2024-05-28T18:30:00.000Z",
-        "priority": _priority.toUpperCase()  
+        // "reminderDate": "2024-05-22T18:30:00.000Z",
+        "reminderDate":  formattedReminderDate,
+        "status": "OPEN",
+        // "dueDate": "2025-05-28T18:30:00.000Z",
+        "dueDate":  formattedDueDate,
+
+        "priority": _priority.toUpperCase()
       };
 
       String jsonBody = jsonEncode(taskData);
@@ -80,15 +124,164 @@ class _TaskFormPageState extends State<TaskFormPage> {
         body: jsonBody,
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
+        print('Received 200 OK response.');
+        print('Response body: ${response.body}');
+        _fetchRunningTasks();
+      } else if (response.statusCode == 201) {
         print('Task registered successfully!');
       } else {
-        print('Failed to register task. Error ${response.statusCode}: ${response.reasonPhrase}');
+        print(
+            'Failed to register task. Error ${response.statusCode}: ${response.reasonPhrase}');
+        print('Response body: ${response.body}');
       }
     } catch (e) {
       print('Error sending request: $e');
     }
   }
+    
+    String _formatDateTime(String dateTimeString) {
+  // Parse the given string to DateTime
+  DateTime parsedDateTime = DateTime.parse(dateTimeString);
+
+  // Format DateTime to ISO 8601 format
+  String formattedDateTime = parsedDateTime.toIso8601String();
+
+  return formattedDateTime;
+}
+
+
+  Future<void> _deleteTask(int taskId) async {
+    final String apiUrl =
+        'http://62.72.13.94:9081/api/ramtsksched/tasks/deleteBy/$taskId';
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+
+      if (token == null) {
+        print('JWT token not found. User may not be logged in.');
+        return;
+      }
+
+      final response = await http.delete(
+        Uri.parse(apiUrl),
+        headers: {'Authorization': token},
+      );
+
+      if (response.statusCode == 200) {
+        print('Task deleted successfully.');
+        // Refresh the list of tasks after deletion
+        setState(() {
+          // Manually update the list of tasks or refetch them
+          // Example: Call _fetchRunningTasks() again to update the UI
+        });
+      } else {
+        print(
+            'Failed to delete task. Error ${response.statusCode}: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error deleting task: $e');
+    }
+  }
+
+  Widget _buildRunningTasksTab() {
+    return FutureBuilder(
+      future: _fetchRunningTasks(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else {
+          List<dynamic> runningTasks = snapshot.data as List<dynamic>;
+          return ListView.builder(
+            itemCount: runningTasks.length,
+            itemBuilder: (context, index) {
+              var task = runningTasks[index];
+              return _buildTaskCard(task);
+            },
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildTaskCard(Map<String, dynamic> task) {
+    return Card(
+      margin: EdgeInsets.all(8.0),
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Task Name: ${task['taskName']}'),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.edit),
+                      onPressed: () {
+                        _navigateToUpdateTask(task);
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        _showDeleteConfirmationDialog(task['id']);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Text('Task Description: ${task['taskDescription']}'),
+            Text('Reminder Date: ${task['reminderDate']}'),
+            Text('Due Date: ${task['dueDate']}'),
+            Text('Status: ${task['status']}'),
+            Text('Priority: ${task['priority']}'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToUpdateTask(Map<String, dynamic> task) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TaskUpdatePage(task)),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(int taskId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete'),
+          content: Text('Are you sure you want to delete this task?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Delete'),
+              onPressed: () {
+                _deleteTask(taskId);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  //  creating a task here
 
   Widget _buildScheduledTasksTab() {
     return Padding(
@@ -126,7 +319,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             value: _priority,
             label: 'Priority',
             icon: Icons.priority_high,
-            items: ['Low', 'Medium', 'High'],
+            items: ['Low', 'medium', 'High'],
             onChanged: (value) {
               setState(() {
                 _priority = value!;
@@ -143,83 +336,25 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Widget _buildRunningTasksTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTextField(
-            controller: _taskNameController,
-            label: 'Task Name',
-            icon: Icons.task,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _taskDescriptionController,
-            label: 'Task Description',
-            icon: Icons.description,
-          ),
-          const SizedBox(height: 16),
-          _buildDateTimeField(
-            controller: _reminderController,
-            label: 'Reminder Date',
-            icon: Icons.alarm,
-            readOnly: true,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _statusController,
-            label: 'Status',
-            icon: Icons.info,
-          ),
-          const SizedBox(height: 16),
-          _buildDateTimeField(
-            controller: _dueDateController,
-            label: 'Due Date',
-            icon: Icons.date_range,
-            readOnly: true,
-          ),
-          const SizedBox(height: 16),
-          _buildDropdownField(
-            value: _priority,
-            label: 'Priority',
-            icon: Icons.priority_high,
-            items: ['Low', 'medium', 'High'],
-            onChanged: (value) {
-              setState(() {
-                _priority = value!;
-              });
+  Widget _ATasksTab() {
+    return FutureBuilder(
+      future: _fetchRunningTasks(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else {
+          List<dynamic> runningTasks = snapshot.data as List<dynamic>;
+          return ListView.builder(
+            itemCount: runningTasks.length,
+            itemBuilder: (context, index) {
+              var task = runningTasks[index];
+              return _buildTaskCard(task);
             },
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _AddTask,
-            child: const Text('Save Task'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompletedTasksTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTextField(
-            controller: _completedTaskController,
-            label: 'Completed Task',
-            icon: Icons.check_circle,
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: _AddTask,
-            child: const Text('Save Completed Task'),
-          ),
-        ],
-      ),
+          );
+        }
+      },
     );
   }
 
@@ -269,7 +404,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
               pickedTime.hour,
               pickedTime.minute,
             );
-            controller.text = DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
+            controller.text =
+                DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
           }
         }
       },

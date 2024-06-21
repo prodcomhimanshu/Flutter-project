@@ -10,7 +10,7 @@ class ProfileForm extends StatefulWidget {
 
 class _ProfileFormState extends State<ProfileForm> {
   int? userId;
-   String? fetch_Email;
+  String? fetch_Email;
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
@@ -30,11 +30,9 @@ class _ProfileFormState extends State<ProfileForm> {
   }
 
   Future<void> _fetchProfileData() async {
-     
-
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
-     fetch_Email = prefs.getString('user_email');
+    fetch_Email = prefs.getString('user_email');
 
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -43,13 +41,12 @@ class _ProfileFormState extends State<ProfileForm> {
       return;
     }
     print('Retrieved token: $token');
-     
+
     final response = await http.get(
-      Uri.parse(
-          'http://62.72.13.94:9081/api/ramusrg/$fetch_Email'),    
+      Uri.parse('http://62.72.13.94:9081/api/ramusrg/$fetch_Email'),
     );
-     print('Status Code: ${response.statusCode}');
-  print('Response Body: ${response.body}');
+    print('Status Code: ${response.statusCode}');
+    print('Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -69,7 +66,6 @@ class _ProfileFormState extends State<ProfileForm> {
         _childhoodMemoryController.text =
             data['userQuestion']['thirdSecretAnswer'] ?? '';
       });
-
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -79,57 +75,7 @@ class _ProfileFormState extends State<ProfileForm> {
     }
   }
 
-// Future<void> _fetchProfileData() async {
-//   final prefs = await SharedPreferences.getInstance();
-//   final token = prefs.getString('jwt_token');
-
-//   if (token == null) {
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       const SnackBar(content: Text('No token found')),
-//     );
-//     return;
-//   }
-//   print('Retrieved token: $token');
-
-//   final response = await http.get(
-//     Uri.parse('http://62.72.13.94:9081/api/ramusrg/Himanshusingh945443@gmail.com'),
-//   );
-
-//   print('Status Code: ${response.statusCode}');
-//   print('Response Body: ${response.body}');
-
-//   if (response.statusCode == 200) {
-//     try {
-//       final data = json.decode(response.body);
-//       print('API Response: $data'); // Debug statement to inspect API response
-
-//       setState(() {
-//         _emailController.text = data['email'] ?? '';
-//         _firstNameController.text = data['userFirstName'] ?? '';
-//         _middleNameController.text = data['userMiddleName'] ?? '';
-//         _lastNameController.text = data['userLastName'] ?? '';
-//         _phoneController.text = data['phone'] ?? '';
-//         _firstPetController.text = data['userQuestion']['firstSecretAnswer'] ?? '';
-//         _birthCityController.text = data['userQuestion']['secondSecretAnswer'] ?? '';
-//         _childhoodMemoryController.text = data['userQuestion']['thirdSecretAnswer'] ?? '';
-//       });
-//     } catch (e) {
-//       print('Error parsing JSON: $e');
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Error parsing JSON response: $e')),
-//       );
-//     }
-//   } else {
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(
-//           content:
-//               Text('Failed to load profile data: ${response.statusCode}')),
-//     );
-//   }
-// }
-
-
-
+ 
 
   Future<void> _updateProfileData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -154,7 +100,7 @@ class _ProfileFormState extends State<ProfileForm> {
         'userMiddleName': _middleNameController.text,
         'userLastName': _lastNameController.text,
         'phone': _phoneController.text,
-        'status': true,  
+        'status': true,
         'userQuestion': {
           'firstSecretAnswer': _firstPetController.text,
           'secondSecretAnswer': _birthCityController.text,
