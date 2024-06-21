@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +16,7 @@ class ChatMessage {
 
   factory ChatMessage.fromJson(Map<String, dynamic> json, int userId) {
     return ChatMessage(
-      body: json['body'], 
+      body: json['body'],
       creationDate: json['creationDate'],
       sentByUser: json['senderId'] == userId, // Check if senderId matches user's ID
     );
@@ -52,14 +51,14 @@ class Conversation {
   }
 }
 
-class Chat extends StatefulWidget {
-  const Chat({Key? key}) : super(key: key);
+class ChatPage2 extends StatefulWidget {
+  const ChatPage2({Key? key}) : super(key: key);
 
   @override
   _ChatState createState() => _ChatState();
 }
 
-class _ChatState extends State<Chat> {
+class _ChatState extends State<ChatPage2> {
   int? userId;
   int? currentConversationId;
   String appBarTitle = '';
@@ -138,17 +137,6 @@ class _ChatState extends State<Chat> {
     } else {
       print('Error sending message: ${response.statusCode}');
     }
-  }
-
-  void triggerNotification() {
-    AwesomeNotifications().createNotification(
-      content: NotificationContent(
-        id: 10,
-        channelKey: 'basic_channel',
-        title: 'Simple Notification',
-        body: 'hey himanhsu!, Your notification is working ',
-      ),
-    );
   }
 
   @override
@@ -269,7 +257,6 @@ class _ChatState extends State<Chat> {
                     if (currentConversationId != null) {
                       String message = _messageController.text;
                       _messageController.clear();
-                      triggerNotification();
                       await sendMessage(currentConversationId!, message);
                     }
                   },

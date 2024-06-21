@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:ram/pages/home.dart';
 import 'package:ram/pages/profile.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 
-// void main() => runApp(const BottomNavigationBarExampleApp());
+
 
 class BottomNavigationBarExampleApp extends StatelessWidget {
   const BottomNavigationBarExampleApp({Key? key}) : super(key: key);
-
+   @override
+    void initState() {
+    // super.initState();
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(

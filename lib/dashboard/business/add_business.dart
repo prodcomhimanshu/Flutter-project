@@ -1,4 +1,4 @@
- import 'dart:io';
+import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -10,22 +10,18 @@ import 'package:ram/dashboard/business/get_business.dart';
 import 'package:ram/dashboard/dashboard_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: BusinessRegisterForm(),
-    );
-  }
-}
-
 class BusinessRegisterForm extends StatefulWidget {
   @override
   _BusinessRegisterFormState createState() => _BusinessRegisterFormState();
+}
+
+class User {
+  String? userEmail;
+  String? userRole;
+  String? primaryPhone;
+  String? chatAllowance;
+
+  User({this.userEmail, this.userRole, this.primaryPhone, this.chatAllowance});
 }
 
 class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
@@ -36,18 +32,17 @@ class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
   final ImagePicker _picker = ImagePicker();
   File? selectedImage;
   String? imageDescription;
-  String? userEmail; // Variable to store the user email
-  String? userRole; // Variable to store the user role
-  String? userprimaryPhone; 
 
-  // Data variables
   String email = '';
   String businessName = '';
   String businessURLHandle = '';
   String businessType = '';
   String primaryPhone = '';
   String owner = '';
+  String? chatAllowance;
+  List<User> users = [];
 
+  /// This is store User Association data
   List<String> skillSets = [];
   List<String> zipCodes = [];
   List<String> phoneNumbers = [];
@@ -55,53 +50,90 @@ class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
   List<String> addresses = [];
   List<String> contacts = [];
 
-  List<Map<String, dynamic>> userAssociations = [];
-
+  List<File> selectedImages = [];
   String businessText = '';
 
- 
+  // Future<void> _pickImage() async {
+  //   final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+  //   if (pickedFile != null) {
+  //     // Convert XFile to File
+  //     final File pickedFileAsFile = File(pickedFile.path);
 
- 
+  //     // Get the directory for saving files
+  //     final Directory appDir = await getApplicationDocumentsDirectory();
+  //     final String imagesDirectory = '${appDir.path}/RAM/images';
 
+  //     // Create the 'ram/images' directory if it doesn't exist
+  //     final Directory directory = Directory(imagesDirectory);
+  //     if (!await directory.exists()) {
+  //       await directory.create(recursive: true);
+  //     }
 
-   Future<void> _pickImage() async {
-  final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-  if (pickedFile != null) {
-    // Convert XFile to File
-    final File pickedFileAsFile = File(pickedFile.path);
+  //     // Get the original filename
+  //     final String originalFilename = path.basename(pickedFile.path);
 
-    // Get the directory for saving files
-    final Directory appDir = await getApplicationDocumentsDirectory();
-    final String imagesDirectory = '${appDir.path}/ram/images';
+  //     // Define the image path within the 'Ram/images' directory using the original filename
+  //     final String imagePath = '$imagesDirectory/$originalFilename';
 
-    // Create the 'ram/images' directory if it doesn't exist
-    final Directory directory = Directory(imagesDirectory);
-    if (!await directory.exists()) {
-      await directory.create(recursive: true);
-    }
+  //     try {
+  //       // Copy the image file to the 'ram/images' directory
+  //       final File newImage = await pickedFileAsFile.copy(imagePath);
 
-    // Get the original filename
-    final String originalFilename = path.basename(pickedFile.path);
+  //       setState(() {
+  //         selectedImage = newImage;
+  //       });
+  //       print('Image copied successfully: $imagePath');
 
-    // Define the image path within the 'ram/images' directory using the original filename
-    final String imagePath = '$imagesDirectory/$originalFilename';
+  //       // Now you can use the 'newImage' file object to manipulate or display the image
+  //     } catch (e) {
+  //       print('Error copying image: $e');
+  //     }
+  //   }
+  // }
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      try {
+        final pickedFileAsFile = File(pickedFile.path);
 
-    try {
-      // Copy the image file to the 'ram/images' directory
-      final File newImage = await pickedFileAsFile.copy(imagePath);
+        // Get the directory for saving files (ensure 'images' subdirectory)
+        final Directory appDir = await getApplicationDocumentsDirectory();
+        final String imagesDirectory = '${appDir.path}/images';
 
-      setState(() {
-        selectedImage = newImage;
-      });
-       print('Image copied successfully: $imagePath');
+        // Create the 'images' directory if it doesn't exist
+        final Directory directory = Directory(imagesDirectory);
+        if (!await directory.exists()) {
+          await directory.create(recursive: true);
+        }
 
-      // Now you can use the 'newImage' file object to manipulate or display the image
-    } catch (e) {
-      print('Error copying image: $e');
+        // Extract the filename (handle potential special characters)
+        final String filename =
+            pickedFile.name; // Use pickedFile.name instead of path.basename
+
+        // Define the image path within the 'images' directory using the extracted filename
+        final String imagePath = '$imagesDirectory/$filename';
+
+        // Copy the image file to the 'images' directory
+        final File newImage = await pickedFileAsFile.copy(imagePath);
+
+        setState(() {
+          selectedImage =
+              newImage; // Update UI with the new image (if applicable)
+        });
+        print('Image copied successfully: $imagePath');
+
+        // Verify if the image file exists in the directory (optional)
+        final File savedImage = File(imagePath);
+        if (await savedImage.exists()) {
+          print('Image file exists in directory: $imagePath');
+        } else {
+          print('Image file does not exist in directory: $imagePath');
+        }
+      } catch (e) {
+        print('Error copying image: $e');
+      }
     }
   }
-}
-
 
   Future<void> registerBusiness() async {
     int? userId;
@@ -117,7 +149,18 @@ class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
         print('JWT token not found. User may not be logged in.');
         return;
       }
-
+      List<Map<String, dynamic>> userAssociationsData = users.map((user) {
+        return {
+          'email': user.userEmail,
+          'userRole': user.userRole,
+          'chatallow': user.chatAllowance,
+          "primaryPhone": "0990090909",
+          'isRegisteredViaApp': false,
+          'isEmailVerified': false,
+          'isPhoneVerified': false,
+          'status': true,
+        };
+      }).toList();
       // Construct business data
       Map<String, dynamic> businessData = {
         'email': email,
@@ -130,49 +173,42 @@ class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
         "status": true,
         "profile": {
           "businessText": businessText,
-          "userName": "",
+          "userName": " ",
           "favoriteCount": 0,
           "lifetimeHitCount": 0
         },
         "images": [
           {
             "imageDescription": imageDescription,
-            "image": selectedImage != null
-                ? path.basename(selectedImage!.path)
-                : "",
+            "imageName":
+                selectedImage != null ? path.basename(selectedImage!.path) : "",
             "imageViews": 0
           }
         ],
-        "userAssociations": [
-          {
-            "email": userEmail,
-            "userRole": userRole,
-            "primaryPhone": userprimaryPhone,
-            "isRegisteredViaApp": false,
-            "isEmailVerified": false,
-            "isPhoneVerified": false,
-            "status": true,
-          }
-        ],
+        "userAssociations": userAssociationsData,
         "zipCodes": zipCodes
-            .map((zipCode) => {"zipCode": zipCode, "skillHitCount": 0})
+            .map((zipCode) => {"zipCode": zipCode, "zipCodeHitCount": 0})
             .toList(),
         "skillSets": skillSets
             .map((skillText) => {"skillText": skillText, "skillHitCount": 0})
             .toList(),
         "phoneNumbers": phoneNumbers
             .map((phoneNumber) =>
-                {"phoneNumber": phoneNumber, "skillHitCount": 0})
+                {"phoneNumber": phoneNumber, "phoneNumberType": 0})
             .toList(),
         "emailAddresses": emailAddresses
             .map((emailAddress) =>
-                {"emailAddress": emailAddress, "skillHitCount": 0})
+                {"emailAddress": emailAddress, "emailAddressType": 0})
             .toList(),
         "addresses": addresses
-            .map((address) => {"address": address, "skillHitCount": 0})
+            .map((address) => {
+                  "address": address,
+                  "latitude": 25.4484257,
+                  "longitude": 78.5684594
+                })
             .toList(),
       };
-      
+
       String jsonBody = jsonEncode(businessData);
       print('JSON Payload: $jsonBody');
       final response = await http.post(
@@ -218,7 +254,8 @@ class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
                 if (navigateToLogin) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => (const DashboardScreen())),
+                    MaterialPageRoute(
+                        builder: (context) => (const DashboardScreen())),
                   );
                 }
               },
@@ -290,80 +327,83 @@ class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
   }
 
   Widget _buildFirstPage() {
-    return ListView(
-      padding: const EdgeInsets.all(20.0),
-      children: <Widget>[
-        TextFormField(
-          decoration: const InputDecoration(labelText: 'Email'),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your email';
-            }
-            return null;
-          },
-          onSaved: (newValue) => email = newValue ?? '',
-        ),
-        TextFormField(
-          decoration: const InputDecoration(labelText: 'Business Name'),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your business name';
-            }
-            return null;
-          },
-          onSaved: (newValue) => businessName = newValue ?? '',
-        ),
-        TextFormField(
-          decoration: const InputDecoration(labelText: 'Business URL Handle'),
-          onSaved: (newValue) => businessURLHandle = newValue ?? '',
-        ),
-        DropdownButtonFormField<String>(
-          decoration: const InputDecoration(labelText: 'Business Type'),
-          value: businessType.isNotEmpty ? businessType : null,
-          items: ['Individual', 'Business']
-              .map((type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              businessType = value ?? '';
-            });
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select a business type';
-            }
-            return null;
-          },
-        ),
-        TextFormField(
-          decoration: const InputDecoration(labelText: 'Primary Phone'),
-          onSaved: (newValue) => primaryPhone = newValue ?? '',
-        ),
-        DropdownButtonFormField<String>(
-          decoration: const InputDecoration(labelText: 'Owner'),
-          value: owner.isNotEmpty ? owner : null,
-          items: ['Yes', 'No']
-              .map((value) => DropdownMenuItem(
-                    value: value,
-                    child: Text(value),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              owner = value ?? '';
-            });
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select an option';
-            }
-            return null;
-          },
-        ),
-      ],
+    return Container(
+      color: Color.fromARGB(255, 192, 229, 238), // Set background color here
+      child: ListView(
+        padding: const EdgeInsets.all(20.0),
+        children: <Widget>[
+          TextFormField(
+            decoration: const InputDecoration(labelText: 'Email'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              return null;
+            },
+            onSaved: (newValue) => email = newValue ?? '',
+          ),
+          TextFormField(
+            decoration: const InputDecoration(labelText: 'Business Name'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your business name';
+              }
+              return null;
+            },
+            onSaved: (newValue) => businessName = newValue ?? '',
+          ),
+          TextFormField(
+            decoration: const InputDecoration(labelText: 'Business URL Handle'),
+            onSaved: (newValue) => businessURLHandle = newValue ?? '',
+          ),
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(labelText: 'Business Type'),
+            value: businessType.isNotEmpty ? businessType : null,
+            items: ['Individual', 'Business']
+                .map((type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(type),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                businessType = value ?? '';
+              });
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select a business type';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            decoration: const InputDecoration(labelText: 'Primary Phone'),
+            onSaved: (newValue) => primaryPhone = newValue ?? '',
+          ),
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(labelText: 'Owner'),
+            value: owner.isNotEmpty ? owner : null,
+            items: ['Yes', 'No']
+                .map((value) => DropdownMenuItem(
+                      value: value,
+                      child: Text(value),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                owner = value ?? '';
+              });
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select an option';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -371,28 +411,96 @@ class _BusinessRegisterFormState extends State<BusinessRegisterForm> {
     return ListView(
       padding: const EdgeInsets.all(20.0),
       children: <Widget>[
-        TextFormField(
-          decoration: const InputDecoration(labelText: 'User Email'),
-          onSaved: (newValue) {
-            // Save the user email to the variable
-            userEmail = newValue;
-          },
+        Column(
+          children: users.map((user) => _buildUserRow(user)).toList(),
         ),
-        TextFormField(
-          decoration: const InputDecoration(labelText: 'User Role'),
-          onSaved: (newValue) {
-            // Save the user role to the variable
-            userRole = newValue!;
+        SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              users.add(User()); // Add a new User object to the list
+            });
           },
-        ),
-        TextFormField(
-          decoration: const InputDecoration(labelText: 'Primary Phone'),
-          onSaved: (newValue) {
-            // Save the primary phone to the variable
-            userprimaryPhone = newValue!;
-          },
+          child: Text('Add User'),
         ),
       ],
+    );
+  }
+
+  Widget _buildUserRow(User user) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              decoration: InputDecoration(labelText: 'User Email'),
+              onChanged: (newValue) {
+                user.userEmail = newValue;
+              },
+            ),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: 'User Role'),
+              value: user.userRole,
+              items: ['Owner', 'Delegate']
+                  .map((role) => DropdownMenuItem(
+                        value: role,
+                        child: Text(role),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  user.userRole = value;
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select a user role';
+                }
+                return null;
+              },
+            ),
+            TextFormField(
+              decoration: InputDecoration(labelText: 'Primary Phone'),
+              onChanged: (newValue) {
+                user.primaryPhone = newValue;
+              },
+            ),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: 'Chat Allowance'),
+              value: user.chatAllowance,
+              items: ['ALL', 'NO', 'SPECIFIC']
+                  .map((option) => DropdownMenuItem(
+                        value: option,
+                        child: Text(option),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  user.chatAllowance = value;
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select a chat allowance option';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  users.remove(user); // Remove this user from the list
+                });
+              },
+              child: Text('Remove User'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

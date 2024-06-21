@@ -1,5 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+ 
+import 'package:ram/dashboard/chat/chat2.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ram/services/api_service.dart';
 
@@ -21,14 +26,24 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'RENTAL ASSETS MANAGEMENT',
-          style: TextStyle(color: Colors.white), 
-         // Set text color to white
+        title: const Row(
+          children: [
+            Expanded(
+              // Wrap the Row with Expanded
+              child: Text(
+                'RENTAL ASSETS MANAGEMENT',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+           
+          ],
         ),
-        backgroundColor: Colors.black, // Set app bar background color to black
+        backgroundColor: const Color.fromARGB(
+            255, 242, 48, 48), // Set app bar background color to black
       ),
-      backgroundColor: Colors.black, // Set scaffold background color to black
+
+      backgroundColor: const Color.fromARGB(
+          255, 220, 115, 115), // Set scaffold background color to black
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -154,4 +169,86 @@ class _MyHomePageState extends State<MyHomePage> {
       print('Could not launch $fullUrl: $e');
     }
   }
+
+  // Method to show notification dialog
+   void _showNotificationDialog(BuildContext context) async {
+  try {
+    const apiUrl =
+        'http://62.72.13.94:9081/api/ramchtmsg/findAll/conversation/2';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = jsonDecode(response.body);
+      List<Conversation> conversations =
+          responseData.map((json) => Conversation.fromJson(json)).toList();
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text(' All Conversations'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(conversations.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                // ChatPage(conversation: conversations[index]),
+                                const ChatPage2()
+                          ),
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 3,
+                              offset: const Offset(0, 2), // changes position of shadow
+                            ),
+                          ],
+                          border: Border.all(color: Colors.blueGrey.withOpacity(0.5)),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            conversations[index].name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      throw Exception('Failed to load conversations: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error fetching conversations: $e');
+  }
+}
+
+
 }

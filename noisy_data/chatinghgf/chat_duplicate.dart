@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:awesome_notifications/awesome_notifications.dart';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,31 +7,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ChatMessage {
   final String body;
   final String creationDate;
-  final bool sentByUser; // Indicates whether the message was sent by the user
 
   ChatMessage({
     required this.body,
     required this.creationDate,
-    required this.sentByUser,
   });
 
-  factory ChatMessage.fromJson(Map<String, dynamic> json, int userId) {
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
-      body: json['body'], 
+      body: json['body'],
       creationDate: json['creationDate'],
-      sentByUser: json['senderId'] == userId, // Check if senderId matches user's ID
     );
-  }
-
-  String formattedCreationDate() {
-    // Convert creationDate string to DateTime object
-    DateTime dateTime = DateTime.parse(creationDate);
-    // Format DateTime object to display date in "MM/DD" format and time in "hh:mm aa" format
-    String formattedDate =
-        '${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')}';
-    String formattedTime =
-        '${(dateTime.hour % 12).toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour >= 12 ? 'PM' : 'AM'}';
-    return '$formattedDate $formattedTime';
   }
 }
 
@@ -61,8 +47,6 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> {
   int? userId;
-  int? currentConversationId;
-  String appBarTitle = '';
   final TextEditingController _messageController = TextEditingController();
   List<ChatMessage> messages = [];
   List<Conversation> conversations = [];
@@ -70,11 +54,12 @@ class _ChatState extends State<Chat> {
   @override
   void initState() {
     super.initState();
+    fetchMessages();
     fetchConversations();
   }
 
-  Future<void> fetchMessages(int conversationId) async {
-    final apiUrl = 'http://62.72.13.94:9081/api/ramchtmsg/get/message/$conversationId';
+  Future<void> fetchMessages() async {
+    final apiUrl = 'http://62.72.13.94:9081/api/ramchtmsg/get/message/83';
 
     final response = await http.get(Uri.parse(apiUrl));
 
@@ -82,7 +67,7 @@ class _ChatState extends State<Chat> {
       final List<dynamic> responseData = jsonDecode(response.body);
       setState(() {
         messages =
-            responseData.map((json) => ChatMessage.fromJson(json, userId!)).toList();
+            responseData.map((json) => ChatMessage.fromJson(json)).toList();
       });
     } else {
       print('Failed to load messages: ${response.statusCode}');
@@ -109,17 +94,16 @@ class _ChatState extends State<Chat> {
     }
   }
 
-  Future<void> sendMessage(int conversationId, String message) async {
+  Future<void> sendMessage(String message) async {
     final apiUrl = 'http://62.72.13.94:9081/api/ramchtmsg/send/message';
     final prefs = await SharedPreferences.getInstance();
     userId = prefs.getInt('user_id');
-
     Map<String, dynamic> chattingData = {
-      "conversation": {"id": conversationId},
+      "conversation": {"id": 77},
       "senderId": userId,
-      "creationDate": DateTime.now().toUtc().toIso8601String().substring(0, 19),
+      "creationDate": DateTime.now().toUtc().toIso8601String(),
       "body": message,
-      "read": false
+      "read": false,
     };
 
     String jsonBody = jsonEncode(chattingData);
@@ -133,29 +117,21 @@ class _ChatState extends State<Chat> {
     );
 
     if (response.statusCode == 200) {
+      // Message sent successfully (you can handle this as needed)
       print('Message sent!');
-      fetchMessages(conversationId); // Refresh messages after sending
+      fetchMessages(); // Refresh messages after sending
     } else {
+      // Handle error (e.g., display an error message to the user)
       print('Error sending message: ${response.statusCode}');
     }
-  }
-
-  void triggerNotification() {
-    AwesomeNotifications().createNotification(
-      content: NotificationContent(
-        id: 10,
-        channelKey: 'basic_channel',
-        title: 'Simple Notification',
-        body: 'hey himanhsu!, Your notification is working ',
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(appBarTitle),
+        title: const Text('Chatting with Your Registered Business'),
+        // Hamburger menu button
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
@@ -167,9 +143,11 @@ class _ChatState extends State<Chat> {
           },
         ),
       ),
+      // Drawer for the hamburger menu
       drawer: Drawer(
         child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.7,
+          width: MediaQuery.of(context).size.width *
+              0.7, // Adjust the width as needed
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
@@ -185,16 +163,22 @@ class _ChatState extends State<Chat> {
                   ),
                 ),
               ),
+              // Display conversation names as list tiles
               for (var conversation in conversations)
                 ListTile(
                   title: Text(conversation.name),
                   onTap: () {
+                    // Navigate to the chat corresponding to the conversation
                     Navigator.pop(context); // Close the drawer
-                    setState(() {
-                      currentConversationId = conversation.id;
-                      appBarTitle = conversation.name; // Update app bar title
-                    });
-                    fetchMessages(conversation.id); // Fetch messages for selected conversation
+                    // Perform navigation or open chat here
+                    // For demonstration, navigate to a new page with the conversation name
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        // builder: (context) => ChatPage(conversation: conversation),
+                        builder: (context) => const Chat(),
+                      ),
+                    );
                   },
                 ),
             ],
@@ -204,57 +188,24 @@ class _ChatState extends State<Chat> {
       body: Column(
         children: [
           Expanded(
-            child: Container(
-              color: Colors.grey[200],
-              child: ListView.builder(
-                itemCount: messages.length,
-                itemBuilder: (context, index) {
-                  final message = messages[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: message.sentByUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-                      children: [
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.all(12.0),
-                            decoration: BoxDecoration(
-                              color: message.sentByUser ? Color.fromARGB(255, 47, 206, 84) : Colors.blueGrey,
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(message.body, style: TextStyle(color: message.sentByUser ? Colors.white : Colors.black)),
-                                Text(
-                                  message.formattedCreationDate(),
-                                  style: TextStyle(color: Color.fromARGB(255, 142, 124, 232)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+            child: ListView.builder(
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final message = messages[index];
+                return ChatBubble(
+                  message: message.body,
+                  isSentByMe: true, // Assuming all messages are sent by the current user for demonstration purposes
+                );
+              },
             ),
           ),
           Container(
-            color: Color.fromARGB(255, 183, 164, 202),
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    onSubmitted: (message) async {
-                      if (currentConversationId != null) {
-                        await sendMessage(currentConversationId!, message);
-                        _messageController.clear();
-                      }
-                    },
                     decoration: InputDecoration(
                       hintText: 'Type your message here...',
                       border: OutlineInputBorder(
@@ -266,12 +217,9 @@ class _ChatState extends State<Chat> {
                 const SizedBox(width: 8.0),
                 FloatingActionButton(
                   onPressed: () async {
-                    if (currentConversationId != null) {
-                      String message = _messageController.text;
-                      _messageController.clear();
-                      triggerNotification();
-                      await sendMessage(currentConversationId!, message);
-                    }
+                    String message = _messageController.text;
+                    _messageController.clear();
+                    await sendMessage(message);
                   },
                   child: const Icon(Icons.send),
                 ),
@@ -279,6 +227,38 @@ class _ChatState extends State<Chat> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class ChatBubble extends StatelessWidget {
+  final String message;
+  final bool isSentByMe;
+
+  const ChatBubble({
+    Key? key,
+    required this.message,
+    required this.isSentByMe,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: isSentByMe ? Colors.blue : Colors.grey[300],
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        child: Text(
+          message,
+          style: TextStyle(
+            color: isSentByMe ? Colors.white : Colors.black,
+          ),
+        ),
       ),
     );
   }

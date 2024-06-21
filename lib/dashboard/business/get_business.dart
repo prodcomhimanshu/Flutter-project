@@ -5,10 +5,6 @@ import 'package:ram/dashboard/business/advertise.dart';
 import 'package:ram/dashboard/business/update_business.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -71,8 +67,7 @@ class _GetBusinessPageState extends State<GetBusinessPage> {
           serviceProviderData = data;
           isLoading = false;
         });
-      print('Fetched Data: $data');
-
+        print('Fetched Data: $data');
       } else {
         setState(() {
           errorMessage = 'Failed to load data: ${response.statusCode}';
@@ -105,6 +100,7 @@ class _GetBusinessPageState extends State<GetBusinessPage> {
                         itemCount: serviceProviderData!.length,
                         itemBuilder: (context, index) {
                           final item = serviceProviderData![index];
+                          // final userAssociations = item['userAssociations'];
                           return Card(
                             child: Column(
                               children: [
@@ -123,6 +119,24 @@ class _GetBusinessPageState extends State<GetBusinessPage> {
                                       Text('Status: ${item['status']}'),
                                       Text('Owner: ${item['owner']}'),
                                       Text('id: ${item['id']}'),
+                                      // if (userAssociations !=
+                                      //     null) // Check if userAssociations exist
+                                      //   ...userAssociations
+                                      //       .map((ua) => Column(
+                                      //             crossAxisAlignment:
+                                      //                 CrossAxisAlignment.start,
+                                      //             children: [
+                                      //               Text(
+                                      //                   'Association Email: ${ua['email']}'),
+                                      //               Text(
+                                      //                   'User Role: ${ua['userRole']}'),
+                                      //               Text(
+                                      //                   'Primary Phone: ${ua['primaryPhone']}'),
+
+                                      //               Text('ramOwn: ${ua['ramOwn']}'),
+                                      //             ],
+                                      //           ))
+                                      //       .toList(),
                                     ],
                                   ),
                                 ),
@@ -135,7 +149,8 @@ class _GetBusinessPageState extends State<GetBusinessPage> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                UpdateBusinessPage(initialData: item),
+                                                UpdateBusinessPage(
+                                                    initialData: item),
                                           ),
                                         );
                                       },

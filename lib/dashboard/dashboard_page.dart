@@ -1,9 +1,13 @@
- import 'package:flutter/material.dart';
+ import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ram/dashboard/business/add_business.dart';
 import 'package:ram/dashboard/business/get_business.dart';
 import 'package:ram/dashboard/business/user_profile.dart';
+import 'package:ram/dashboard/chat/chat2.dart';
 import 'package:ram/dashboard/subscription/subscription.dart';
+import 'package:ram/pages/login.dart';
 import 'package:ram/pages/navigation_menu.dart';
 import 'package:shared_preferences/shared_preferences.dart'; 
 
@@ -24,8 +28,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('RENTAL ASSETS MANAGEMENT'),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[200], // Set your desired background color here
+        decoration: const BoxDecoration(
+          color: Color.fromARGB(255, 220, 115, 115) // Set your desired background color here
         ),
         child: ListView(
           children: <Widget>[
@@ -40,11 +44,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Handle item tap
               Navigator.push(context,MaterialPageRoute(builder: (context) =>  SubscriptionPage()));
             }),
+            _buildListItem('Messages', Icons.message, () {
+              
+                _showNotificationDialog(context);
+          
+            }),
+
             _buildListItem('Logout', Icons.logout, () async {
               await logout();
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const BottomNavigationBarExample()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
                 (route) => false,
               );
             }),
@@ -106,6 +116,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
       onTap: onTap,
     );
   }
+
+
+   void _showNotificationDialog(BuildContext context) async {
+  try {
+    const apiUrl =
+        'http://62.72.13.94:9081/api/ramchtmsg/findAll/conversation/2';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = jsonDecode(response.body);
+      List<Conversation> conversations =
+          responseData.map((json) => Conversation.fromJson(json)).toList();
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text(' All Conversations'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(conversations.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                // ChatPage(conversation: conversations[index]),
+                                const ChatPage2()
+                          ),
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 3,
+                              offset: const Offset(0, 2), // changes position of shadow
+                            ),
+                          ],
+                          border: Border.all(color: Colors.blueGrey.withOpacity(0.5)),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            conversations[index].name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      throw Exception('Failed to load conversations: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error fetching conversations: $e');
+  }
+}
+
+
 
   Future<void> logout() async {
     try {

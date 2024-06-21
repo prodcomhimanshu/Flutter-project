@@ -1,19 +1,21 @@
 // lib/pages/profile_page.dart
 import 'package:flutter/material.dart';
-import 'package:ram/pages/login.dart';
-import 'package:ram/pages/signup.dart';
+import 'package:ram/dashboard/dashboard_page.dart';
+import 'package:ram/pages/setting.dart';
+import 'package:ram/pages/task.dart';
+ 
 
 class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color.fromARGB(255, 220, 115, 115),
       body: ListView(
         children: [
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
-              'Rent Asset Management',
+              'RENTAL ASSETS MANAGEMENT',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20.0,
@@ -21,30 +23,37 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-          _buildListItem(context, 'Signup', Icons.person_add, () {
+           
+
+
+          _buildListItem(context, 'Dashboard', Icons.dashboard, () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SignUpApp()),
+              MaterialPageRoute(builder: (context) => DashboardScreen()),
             );
           }),
           const Divider(color: Colors.white),
-          _buildListItem(context, 'Login', Icons.login, () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => LoginApp()),
-            );
-          }),
-          const Divider(color: Colors.white),
+
           _buildListItem(context, 'About Us', Icons.info, () {
             // Add navigation logic for About Us page
+            //  Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) =>  TaskFormPage()),
+            // );
           }),
           const Divider(color: Colors.white),
-          _buildListItem(context, 'Contact Us', Icons.contact_phone, () {
+          _buildListItem(context, 'Task Schedule', Icons.task, () {
             // Add navigation logic for Contact Us page
+             Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  TaskFormPage()),
+            );
           }),
           const Divider(color: Colors.white),
           _buildListItem(context, 'Settings', Icons.settings, () {
-            // Add navigation logic for Settings page
+             Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  LanguageSwitcher()),);
           }),
         ],
       ),

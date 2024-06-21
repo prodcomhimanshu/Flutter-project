@@ -157,7 +157,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                Chat(), // Pass relevant data to ChatPage if needed
+                Chat(),  
           ),
         );
       } else {

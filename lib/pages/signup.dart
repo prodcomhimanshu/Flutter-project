@@ -195,6 +195,4 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 }
 
-void main() {
-  runApp(SignUpApp());
-}
+ 

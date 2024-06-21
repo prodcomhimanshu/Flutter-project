@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:ram/pages/navigation_menu.dart';
 import 'package:ram/pages/signup.dart';
-import 'package:ram/dashboard/dashboard_page.dart';
+// import 'package:ram/dashboard/dashboard_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginApp extends StatelessWidget {
@@ -121,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
+         MaterialPageRoute(builder: (context) => BottomNavigationBarExampleApp()),
       );
       
       
