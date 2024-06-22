@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
  
-import 'package:ram/dashboard/chat/chat2.dart';
+import 'package:ram/Dashboard_Page/chat/chat2.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ram/services/api_service.dart';
 

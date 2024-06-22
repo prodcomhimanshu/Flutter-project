@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:ram/dashboard/business/add_business.dart';
-import 'package:ram/dashboard/business/get_business.dart';
-import 'package:ram/dashboard/business/user_profile.dart';
-import 'package:ram/dashboard/chat/chat2.dart';
-import 'package:ram/dashboard/subscription/subscription.dart';
-import 'package:ram/pages/login.dart';
+import 'package:ram/Dashboard_Page/business/add_business.dart';
+import 'package:ram/Dashboard_Page/business/get_business.dart';
+import 'package:ram/Dashboard_Page/business/user_profile.dart';
+import 'package:ram/Dashboard_Page/chat/chat2.dart';
+import 'package:ram/Dashboard_Page/subscription/subscription.dart';
+import 'package:ram/Authentication/login.dart';
  
 import 'package:shared_preferences/shared_preferences.dart'; 
 

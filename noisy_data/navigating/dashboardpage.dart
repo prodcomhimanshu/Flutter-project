@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:ram/dashboard/business/add_business.dart';
-import 'package:ram/dashboard/business/get_business.dart';
-import 'package:ram/dashboard/business/user_profile.dart';
-import 'package:ram/pages/login.dart'; // Import your login page
-import 'package:ram/pages/signup.dart';
-import 'package:ram/dashboard/dashboard_page.dart';
+import 'package:ram/Dashboard_Page/business/add_business.dart';
+import 'package:ram/Dashboard_Page/business/get_business.dart';
+import 'package:ram/Dashboard_Page/business/user_profile.dart';
+import 'package:ram/Authentication/login.dart'; // Import your login page
+import 'package:ram/Authentication/signup.dart';
+import 'package:ram/Dashboard_Page/dashboard_page.dart';
 import 'package:shared_preferences/shared_preferences.dart'; 
 
 class DashboardScreen extends StatefulWidget {

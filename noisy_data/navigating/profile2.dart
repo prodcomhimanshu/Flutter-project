@@ -1,7 +1,7 @@
  import 'package:flutter/material.dart';
-import 'package:ram/pages/login.dart';
-import 'package:ram/pages/signup.dart';
-import 'package:ram/dashboard/dashboard_page.dart';
+import 'package:ram/Authentication/login.dart';
+import 'package:ram/Authentication/signup.dart';
+import 'package:ram/Dashboard_Page/dashboard_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {

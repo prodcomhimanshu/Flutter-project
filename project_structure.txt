@@ -1,0 +1,64 @@
+# Project Struture of Flutter :- 
+
+1. The project name is "RAM".
+      - inside "RAM" there are many folders which is pre-built  during creating of flutter project like:-  
+      1. android
+      2. assets
+      3. build
+      4. ios
+      5. lib
+      6. linux
+      7. macos
+      8. web 
+      9. windows
+      10. some plugins and depedencies
+      11. pubspec.yaml
+      12. project_struture.txt file - which i am creating the file about the project_struture(Developer@Himanshu).
+
+*************************************--------------------------*********************-------------------------**********************
+
+2. Focus only two folders where i write our code for runnning the application.
+     - assets :- where i define images,languages,and some static file.
+     - lib    :- consists of all application - this is my main folders.
+
+*************************************--------------------------*********************-------------------------**********************
+
+
+3. Now Come to the main file where our application run.- lib
+        - This is my main Folders
+
+lib
+├── Authentication
+│   ├── login.dart
+│   └── signup.dart
+│
+├── Dashboard_page
+│   ├── Business
+│   │   ├── add_business.dart
+│   │   ├── advertise.dart
+│   │   ├── get_business.dart
+│   │   └── user_profile.dart
+│   │
+│   ├── chat
+│   │   ├── chat1.dart
+│   │   └── chat2.dart
+│   │
+│   ├── Payment
+│   │   └── razorpay_payment.dart
+│   │
+│   └── Subscription
+│       └── Subscription.dart
+│
+├── Homepage
+│   ├── home.dart
+│   ├── navigation.dart
+│   ├── profile.dart
+│   ├── setting.dart
+│   ├── Task_update.dart
+│   └── task.dart
+│
+├── Services
+│   └── API_services.dart
+│
+└── Widgets
+    └── (other widget files)

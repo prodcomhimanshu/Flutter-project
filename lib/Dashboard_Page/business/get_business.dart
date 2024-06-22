@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:ram/dashboard/business/advertise.dart';
-import 'package:ram/dashboard/business/update_business.dart';
+import 'package:ram/Dashboard_Page/business/advertise.dart';
+import 'package:ram/Dashboard_Page/business/update_business.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyApp extends StatelessWidget {

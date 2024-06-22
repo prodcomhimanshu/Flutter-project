@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:ram/pages/task_update_page.dart';
+import 'package:ram/Homepage/task_update_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TaskFormPage extends StatefulWidget {
@@ -51,14 +51,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
 
   Future<List<dynamic>> _fetchRunningTasks() async {
     int? userId;
-    final String apiUrl =
-        'http://62.72.13.94:9081/api/ramtsksched/get/taskby/3';
 
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token');
       userId = prefs.getInt('user_id');
-
+      final String apiUrl =
+          'http://62.72.13.94:9081/api/ramtsksched/get/taskby/$userId';
       if (token == null) {
         print('JWT token not found. User may not be logged in.');
         return [];
@@ -83,73 +82,97 @@ class _TaskFormPageState extends State<TaskFormPage> {
     }
   }
 
-   
 
-  Future<void> _AddTask() async {
-    int? userId;
-    const String apiUrl = 'http://62.72.13.94:9081/api/ramtsksched/create';
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
-      userId = prefs.getInt('user_id');
+Future<void> _AddTask() async {
+  int? userId;
+  const String apiUrl = 'http://62.72.13.94:9081/api/ramtsksched/create';
 
-      if (token == null) {
-        print('JWT token not found. User may not be logged in.');
-        return;
-      }
-     String formattedReminderDate = _formatDateTime(_reminderController.text);
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    userId = prefs.getInt('user_id');
+
+    if (token == null) {
+      print('JWT token not found. User may not be logged in.');
+      return;
+    }
+    
+    // Format dates using ISO 8601 format
+    String formattedReminderDate = _formatDateTime(_reminderController.text);
     String formattedDueDate = _formatDateTime(_dueDateController.text);
-      Map<String, dynamic> taskData = {
-        "userId": userId,
-        "taskName": _taskNameController.text,
-        "taskDescription": _taskDescriptionController.text,
-        // "reminderDate": "2024-05-22T18:30:00.000Z",
-        "reminderDate":  formattedReminderDate,
-        "status": "OPEN",
-        // "dueDate": "2025-05-28T18:30:00.000Z",
-        "dueDate":  formattedDueDate,
 
-        "priority": _priority.toUpperCase()
-      };
+    Map<String, dynamic> taskData = {
+      "userId": userId,
+      "taskName": _taskNameController.text,
+      "taskDescription": _taskDescriptionController.text,
+      "reminderDate": formattedReminderDate,
+      "status": "OPEN", // Assuming status is always "OPEN" for new tasks
+      "dueDate": formattedDueDate,
+      "priority": _priority.toUpperCase()
+    };
 
-      String jsonBody = jsonEncode(taskData);
-      print(taskData);
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json',
-        },
-        body: jsonBody,
+    String jsonBody = jsonEncode(taskData);
+    print(taskData);
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        'Authorization': token,
+        'Content-Type': 'application/json',
+      },
+      body: jsonBody,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print('Received ${response.statusCode} response.');
+      print('Response body: ${response.body}');
+      
+      // Show a snackbar message for success
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task created successfully!'),
+          duration: Duration(seconds: 2), // Optional duration
+        ),
       );
 
-      if (response.statusCode == 200) {
-        print('Received 200 OK response.');
-        print('Response body: ${response.body}');
-        _fetchRunningTasks();
-      } else if (response.statusCode == 201) {
-        print('Task registered successfully!');
-      } else {
-        print(
-            'Failed to register task. Error ${response.statusCode}: ${response.reasonPhrase}');
-        print('Response body: ${response.body}');
-      }
-    } catch (e) {
-      print('Error sending request: $e');
+      // Optionally, refresh the list of running tasks
+      _fetchRunningTasks();
+    } else {
+      print(
+          'Failed to register task. Error ${response.statusCode}: ${response.reasonPhrase}');
+      print('Response body: ${response.body}');
+      
+      // Show a snackbar message for failure
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to create task. Please try again.'),
+          duration: Duration(seconds: 2), // Optional duration
+        ),
+      );
     }
-  }
+  } catch (e) {
+    print('Error sending request: $e');
     
-    String _formatDateTime(String dateTimeString) {
-  // Parse the given string to DateTime
-  DateTime parsedDateTime = DateTime.parse(dateTimeString);
-
-  // Format DateTime to ISO 8601 format
-  String formattedDateTime = parsedDateTime.toIso8601String();
-
-  return formattedDateTime;
+    // Show a snackbar message for error
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error: $e'),
+        duration: const Duration(seconds: 2), // Optional duration
+      ),
+    );
+  }
 }
 
+
+  String _formatDateTime(String dateTimeString) {
+    // Parse the given string to DateTime
+    DateTime parsedDateTime = DateTime.parse(dateTimeString);
+
+    // Format DateTime to ISO 8601 format
+    String formattedDateTime = parsedDateTime.toIso8601String();
+
+    return formattedDateTime;
+  }
 
   Future<void> _deleteTask(int taskId) async {
     final String apiUrl =
@@ -190,7 +213,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
       future: _fetchRunningTasks(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
@@ -209,9 +232,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
 
   Widget _buildTaskCard(Map<String, dynamic> task) {
     return Card(
-      margin: EdgeInsets.all(8.0),
+      margin: const EdgeInsets.all(8.0),
       child: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -222,13 +245,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.edit),
+                      icon: const Icon(Icons.edit),
                       onPressed: () {
                         _navigateToUpdateTask(task);
                       },
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete),
+                      icon: const Icon(Icons.delete),
                       onPressed: () {
                         _showDeleteConfirmationDialog(task['id']);
                       },
@@ -260,17 +283,17 @@ class _TaskFormPageState extends State<TaskFormPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete this task?'),
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this task?'),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Delete'),
+              child: const Text('Delete'),
               onPressed: () {
                 _deleteTask(taskId);
                 Navigator.of(context).pop();
@@ -341,7 +364,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
       future: _fetchRunningTasks(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {

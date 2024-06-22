@@ -6,8 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:ram/dashboard/business/get_business.dart';
-import 'package:ram/dashboard/dashboard_page.dart';
+import 'package:ram/Dashboard_Page/business/get_business.dart';
+import 'package:ram/Dashboard_Page/dashboard_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BusinessRegisterForm extends StatefulWidget {

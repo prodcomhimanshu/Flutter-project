@@ -1,8 +1,9 @@
 // lib/pages/profile_page.dart
 import 'package:flutter/material.dart';
-import 'package:ram/dashboard/dashboard_page.dart';
-import 'package:ram/pages/setting.dart';
-import 'package:ram/pages/task.dart';
+import 'package:ram/Dashboard_Page/dashboard_page.dart';
+import 'package:ram/Dashboard_Page/payment/razorpay_payment.dart';
+import 'package:ram/Homepage/setting.dart';
+import 'package:ram/Homepage/task.dart';
  
 
 class ProfilePage extends StatelessWidget {
@@ -34,15 +35,15 @@ class ProfilePage extends StatelessWidget {
           }),
           const Divider(color: Colors.white),
 
-          _buildListItem(context, 'About Us', Icons.info, () {
-            // Add navigation logic for About Us page
-            //  Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) =>  TaskFormPage()),
-            // );
+          _buildListItem(context, 'Payment', Icons.payment, () {
+            
+             Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>    RazorpayPayment()),
+            );
           }),
           const Divider(color: Colors.white),
-          _buildListItem(context, 'Task Schedule', Icons.task, () {
+          _buildListItem(context, 'Task', Icons.task, () {
             // Add navigation logic for Contact Us page
              Navigator.push(
               context,
@@ -53,7 +54,7 @@ class ProfilePage extends StatelessWidget {
           _buildListItem(context, 'Settings', Icons.settings, () {
              Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) =>  LanguageSwitcher()),);
+              MaterialPageRoute(builder: (context) =>   SettingPage()),);
           }),
         ],
       ),

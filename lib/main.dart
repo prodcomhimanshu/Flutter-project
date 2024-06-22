@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:ram/dashboard/business/add_business.dart';
-import 'package:ram/dashboard/business/ff.dart';
-import 'package:ram/dashboard/business/user_profile.dart';
+import 'package:ram/Dashboard_Page/business/add_business.dart';
+import 'package:ram/Dashboard_Page/business/ff.dart';
+import 'package:ram/Dashboard_Page/business/user_profile.dart';
 
-import 'package:ram/pages/navigation_menu.dart';
-import 'package:ram/pages/home.dart';
-import 'package:ram/pages/signup.dart';
-import 'package:ram/pages/login.dart';
-import 'package:ram/dashboard/dashboard_page.dart';
+import 'package:ram/Homepage/navigation_menu.dart';
+import 'package:ram/Homepage/home.dart';
+import 'package:ram/Authentication/signup.dart';
+import 'package:ram/Authentication/login.dart';
+import 'package:ram/Dashboard_Page/dashboard_page.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:ram/widgets/hhh.dart';
 void main() {

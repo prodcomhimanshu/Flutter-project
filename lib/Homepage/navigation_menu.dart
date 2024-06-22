@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ram/pages/home.dart';
-import 'package:ram/pages/profile.dart';
+import 'package:ram/Homepage/home.dart';
+import 'package:ram/Homepage/profile.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 
 
